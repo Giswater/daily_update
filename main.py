@@ -20,32 +20,44 @@ class DailyUpdate():
         self.cursor = None
         self.mails_to = []
         self.result = None
+        self.smtp_server = None
         self.time_start = datetime.datetime.now().strftime('%d/%m/%y %H:%M:%S')
 
         
     def main(self):
         """ Main function """
         
-        status = self.read_config_file()
-        if status:
-            status = self.set_db_connection()
-            if status:
-                self.call_function()
-                self.mails_to = self.get_mails_from_db()
-                if self.mails_to:
-                    self.create_body_mail(self.result, self.time_start)
+        if not self.read_config_file():
+            return
+            
+        if not self.set_db_conection():
+            return
+        
+        self.call_function()
+        self.mails_to = self.get_mails_from_db()
+        if self.mails_to:
+            self.create_body_mail(self.result, self.time_start)
 
     
     def test(self):
         """ Test mail """
         
-        status = self.read_config_file()
-        if status:
-            self.mails_to = self.get_mails_from_db()
-            if self.mails_to is None:
-                self.mails_to = self.get_mails_from_file()
+        # Read config file
+        if not self.read_config_file():
+            return
+
+        # Connect to SMTP server
+        if not self.connect_smtp_server():
+            return
+            
+        # Get list of mails
+        self.mails_to = self.get_mails_from_db()
+        if self.mails_to is None:
+            self.mails_to = self.get_mails_from_file()
+            
+        # Send test mail
+        self.test_mail(self.time_start)
                 
-            self.test_mail(self.time_start)
 
                     
     def read_config_file(self):
@@ -145,6 +157,10 @@ class DailyUpdate():
             msg_full = (''.join([msg_header, msg_content])).encode()
             self.send_mail(self.mails_to[x], msg_full)
 
+        # Close connection to SMTP server
+        if self.smtp_server:
+            self.smtp_server.quit()
+
 
     def test_mail(self, time_start):
 
@@ -168,22 +184,39 @@ class DailyUpdate():
             msg_content = '<h5>{body}<font color="green">Proceso realizado correctamente</font></h2>\n'.format(body=body)
             msg_full = (''.join([msg_header, msg_content])).encode()
             
-            print("send mail")
             print(self.mails_to[x])
             print(msg_full)
             status = self.send_mail(self.mails_to[x], msg_full)
+            
+        # Close connection to SMTP server
+        if self.smtp_server:
+            self.smtp_server.quit()
 
 
-    def send_mail(self, mail_address, msg_content):
-        """ Send mail to """
+    def connect_smtp_server(self):
+        """ Connect to SMTP server """
         
+        print("connect_smtp_server")
         status = True
         try:
-            server = smtplib.SMTP(self.domain_host, self.domain_port)
-            server.starttls()
-            server.login(self.sender_mail, self.sender_pwd)
-            server.sendmail(self.sender_mail, mail_address, msg_content)
-            server.quit()
+            self.smtp_server = smtplib.SMTP()
+            self.smtp_server.connect(self.domain_host, int(self.domain_port))
+            self.smtp_server.starttls()
+            self.smtp_server.login(self.sender_mail, self.sender_pwd)
+        except Exception as e:
+            status = False
+            print(e)
+
+        return status
+
+        
+    def send_mail(self, mail_address, msg_content):
+        """ Send mail to @mail_address """
+        
+        print("send mail")
+        status = True
+        try:
+            self.smtp_server.sendmail(self.sender_mail, mail_address, msg_content)
         except Exception as e:
             status = False
             print(e)
