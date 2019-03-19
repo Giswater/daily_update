@@ -17,6 +17,7 @@ class DailyUpdate():
     def __init__(self):
         """ Constructor """
         
+        self.conn = None
         self.cursor = None
         self.mails_to = []
         self.result = None
@@ -43,23 +44,32 @@ class DailyUpdate():
         """ Test mail """
         
         # Read config file
+        print("read_config_file")
         if not self.read_config_file():
             return
-
-        # Connect to SMTP server
-        if not self.connect_smtp_server():
-            return
+        
+        # Set database connection
+        print("set_db_connection")
+        if not self.set_db_connection():
+            pass
             
         # Get list of mails
+        print("get_mails_from_db")
         self.mails_to = self.get_mails_from_db()
         if self.mails_to is None:
+            print("get_mails_from_file")
             self.mails_to = self.get_mails_from_file()
-            
+        print(str(self.mails_to))
+
+        # Connect to SMTP server
+        print("connect_smtp_server")
+        if not self.connect_smtp_server():
+            return
+        
         # Send test mail
         self.test_mail(self.time_start)
                 
 
-                    
     def read_config_file(self):
 
         status = True
@@ -183,8 +193,6 @@ class DailyUpdate():
 
             msg_content = '<h5>{body}<font color="green">Proceso realizado correctamente</font></h2>\n'.format(body=body)
             msg_full = (''.join([msg_header, msg_content])).encode()
-            
-            print(self.mails_to[x])
             print(msg_full)
             status = self.send_mail(self.mails_to[x], msg_full)
             
@@ -196,7 +204,6 @@ class DailyUpdate():
     def connect_smtp_server(self):
         """ Connect to SMTP server """
         
-        print("connect_smtp_server")
         status = True
         try:
             self.smtp_server = smtplib.SMTP()
@@ -227,21 +234,30 @@ class DailyUpdate():
     def get_mails_from_db(self):
         """ Return list of mails from configuration table """
         
-        cursor = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        cursor.execute("begin")
-        sql = ("SELECT value FROM " + self.schema + ".config_param_system "
-            " WHERE parameter = 'daily_update_mails'")
-        cursor.execute(sql)
-        mails = cursor.fetchone()
-        cursor.execute("commit")
-        if mails is None:
-            print("Any mail found. Check parameter 'daily_update_mails'")
+        if self.conn is None:
             return None
+        
+        try:
+            
+            cursor = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            cursor.execute("begin")
+            sql = ("SELECT value FROM " + self.schema + ".config_param_system "
+                " WHERE parameter = 'daily_update_mails'")
+            cursor.execute(sql)
+            row = cursor.fetchone()
+            cursor.execute("commit")
+            if row is None:
+                print("Any mail found in table 'config_param_system'. Check parameter 'daily_update_mails'")
+                print("{'mails': [{'mail':'mail_1@domain.com'}, {'mail':'mail_2@domain.com'}]}")
+                return None
 
-        mails_to = []
-        result = ast.literal_eval(mails)
-        for mail in result['mails']:
-            mails_to.append(mail['mail'])
+            mails_to = []
+            result = ast.literal_eval(row[0])
+            for mail in result['mails']:
+                mails_to.append(mail['mail'])
+                
+        except Exception as e:
+            return None
 
         return mails_to
     
