@@ -231,11 +231,11 @@ class DailyUpdate():
 
     def connect_smtp_server(self):
         """ Connect to SMTP server """
-        
+
         status = True
         try:
-            self.smtp_server = smtplib.SMTP()
-            self.smtp_server.connect(self.domain_host, int(self.domain_port))
+            print(str(self.domain_host), int(self.domain_port))
+            self.smtp_server = smtplib.SMTP(self.domain_host, int(self.domain_port))
             self.smtp_server.starttls()
             self.smtp_server.login(self.sender_mail, self.sender_pwd)
         except Exception as e:
@@ -285,6 +285,7 @@ class DailyUpdate():
                 mails_to.append(mail['mail'])
                 
         except Exception as e:
+            print(type(e).__name__)
             return None
 
         return mails_to
