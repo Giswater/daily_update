@@ -31,7 +31,7 @@ class DailyUpdate():
         if not self.read_config_file():
             return
             
-        if not self.set_db_conection():
+        if not self.set_db_connection():
             return
         
         self.call_function()
@@ -98,7 +98,8 @@ class DailyUpdate():
             self.schema = config.get("db_config", "schema")
             self.user = config.get("db_config", "user")
             self.password = config.get("db_config", "password")    
-        except Exception, e:
+            
+        except Exception as e:
             print('read_config_file error %s' % e)
             status = False
             
@@ -112,7 +113,7 @@ class DailyUpdate():
         try:
             self.conn = psycopg2.connect(database=self.db, user=self.user, password=self.password, host=self.host)
             self.cursor = self.conn.cursor()
-        except psycopg2.DatabaseError, e:
+        except psycopg2.DatabaseError as e:
             print('set_db_connection error %s' % e)
             status = False
             
