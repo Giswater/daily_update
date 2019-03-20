@@ -128,7 +128,7 @@ class DailyUpdate():
             self.cursor.execute(sql)
             self.result = self.cursor.fetchone()
             self.cursor.execute("commit")
-            return result
+            return self.result
         except ProgrammingError as e:
             return ["An exception has occurred: {e} \n".format(e=e)]
         except Exception as e:
@@ -150,11 +150,12 @@ class DailyUpdate():
             
         for x in range(0, self.mails_to.__len__()):
             msg_header = 'From: Daily update <' + self.sender_mail + '>\n' \
-                         'To: Receiver Name <' + self.mails_to[x] + '>\n' \
+                         'To: ProcessLog <' + self.mails_to[x] + '>\n' \
                          'MIME-Version: 1.0\n' \
                          'Content-type: text/html\n' \
-                         'Subject: PostgreSql daily update report. Result: <'+str(res)+'>\n' \
+                         'Subject: PostgreSql daily update report. Result: <'+str(res)+'>\n\n' \
                          + str("Date report "+str(datetime_obj))
+            
             body = ' Hora inicio: ' + str(time_start) + '<br>Hora final: ' + str(time_end) + '<br>'
 
             if result[0] == 0:
@@ -185,11 +186,12 @@ class DailyUpdate():
         for x in range(0, self.mails_to.__len__()):
         
             msg_header = 'From: Daily update <' + self.sender_mail + '>\n' \
-                         'To: Receiver Name <' + self.mails_to[x] + '>\n' \
+                         'To: ProcessLog <' + self.mails_to[x] + '>\n' \
                          'MIME-Version: 1.0\n' \
                          'Content-type: text/html\n' \
-                         'Subject: PostgreSQL daily update report. Result: <'+str(result)+'>\n' \
+                         'Subject: PostgreSQL daily update report. Result: <'+str(result)+'>\n\n' \
                          + str("Date report "+str(datetime_obj))
+            
             body = ' Hora inicio: ' + str(time_start) + '<br>Hora final: ' + str(time_end) + '<br>'
 
             msg_content = '<h5>{body}<font color="green">Proceso realizado correctamente</font></h2>\n'.format(body=body)
