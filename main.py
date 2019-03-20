@@ -28,15 +28,37 @@ class DailyUpdate():
     def main(self):
         """ Main function """
         
+        # Read config file
+        print("read_config_file")
         if not self.read_config_file():
             return
             
+        # Set database connection
+        print("set_db_connection")
         if not self.set_db_connection():
             return
         
-        self.call_function()
+        # Get list of mails
+        print("get_mails_from_db")
         self.mails_to = self.get_mails_from_db()
+        if self.mails_to is None:
+            print("get_mails_from_file")
+            self.mails_to = self.get_mails_from_file()
+        print(str(self.mails_to))
+        
+        # Execute function 'gw_fct_utils_daily_update'
+        print("call_function")
+        self.call_function()
+        print(self.result)
+        
+        # Connect to SMTP server
+        print("connect_smtp_server")
+        if not self.connect_smtp_server():
+            return
+        
+        # Send mails
         if self.mails_to:
+            print("create_body_mail")
             self.create_body_mail(self.result, self.time_start)
 
     
@@ -128,12 +150,11 @@ class DailyUpdate():
             self.cursor.execute(sql)
             self.result = self.cursor.fetchone()
             self.cursor.execute("commit")
-            return self.result
         except ProgrammingError as e:
-            return ["An exception has occurred: {e} \n".format(e=e)]
+            self.result = ["An exception has occurred: {e} \n".format(e=e)]
         except Exception as e:
             print(type(e).__name__)
-            return ["An exception has occurred: {e}".format(e=e)]
+            self.result = ["An exception has occurred: {e}".format(e=e)]
 
 
     def create_body_mail(self, result, time_start):
@@ -143,31 +164,35 @@ class DailyUpdate():
         time_end = time_end.strftime('%d/%m/%y %H:%M:%S')
         datetime_obj = datetime.datetime.strptime(time_start, '%d/%m/%y %H:%M:%S').date()
         
+        # Set messages
+        msg_ok = "Proceso realizado correctamente"
+        msg_error = "El proceso no se ha realizado correctamente, consulta log de postgre para mas informacion"
         if result[0] == 0:
             res = "Proceso realizado correctamente"
         else:
             res = "El proceso no se ha realizado correctamente, consulta log."
             
-        for x in range(0, self.mails_to.__len__()):
+        for mail_to in self.mails_to:
+            
             msg_header = 'From: Daily update <' + self.sender_mail + '>\n' \
-                         'To: ProcessLog <' + self.mails_to[x] + '>\n' \
+                         'To: ProcessLog <' + mail_to + '>\n' \
                          'MIME-Version: 1.0\n' \
                          'Content-type: text/html\n' \
-                         'Subject: PostgreSql daily update report. Result: <'+str(res)+'>\n\n' \
-                         + str("Date report "+str(datetime_obj))
+                         'Subject: PostgreSql daily update report. Result: <'+str(res)+'>\n\n' + str("Date report "+str(datetime_obj))
             
-            body = ' Hora inicio: ' + str(time_start) + '<br>Hora final: ' + str(time_end) + '<br>'
+            body = ' Hora inicio: ' + str(time_start) + '<br>Hora final: ' + str(time_end) + '<br><br>'
 
             if result[0] == 0:
-                msg_content = '<h5>{body}<font color="green">Proceso realizado correctamente</font></h2>\n'.format(body=body)
+                msg_content = '<h5>{body}<font color="green">{msg_ok}</font></h2>\n'.format(body=body, msg_ok=msg_ok)
             elif "An exception has occurred" in result[0]:
-                msg_content = '<h5>{body}<font color="red">El proceso no se ha realizado correctamente, consulta log de postgre para mas informacion</font></h2>\n' \
-                              '{result}'.format(body=body, result=result[0])
+                msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2><br>{result}'.format(body=body, msg_error=msg_error, result=result[0])
             else:
-                msg_content = '<h5>{body}<font color="red">El proceso no se ha realizado correctamente, consulta log de postgre para mas informacion</font></h2>\n'.format(body=body)
+                msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2>\n'.format(body=body, msg_error=msg_error)
 
             msg_full = (''.join([msg_header, msg_content])).encode()
-            self.send_mail(self.mails_to[x], msg_full)
+            
+            # Send mail
+            self.send_mail(mail_to, msg_full)
 
         # Close connection to SMTP server
         if self.smtp_server:
@@ -278,6 +303,5 @@ class DailyUpdate():
 
 if __name__ == '__main__':
     script = DailyUpdate()
-    script.test()
+    script.main()
     
-
