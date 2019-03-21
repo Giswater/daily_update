@@ -5,11 +5,14 @@ from psycopg2._psycopg import ProgrammingError
 
 import ast
 import psycopg2, psycopg2.extras
-import configparser
 import datetime
 import os
 import smtplib
 import inspect
+try:
+    import configparser
+except:
+    import ConfigParser as configparser
 
 
 class DailyUpdate():
