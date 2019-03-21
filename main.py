@@ -38,21 +38,24 @@ class DailyUpdate():
             
         # Set database connection
         print("set_db_connection")
-        if not self.set_db_connection():
-            return
+        if self.set_db_connection():
+                
+            # Execute function 'gw_fct_utils_daily_update'
+            print("call_function")
+            self.call_function()
+            print(self.result)
+            
+            # Get list of mails
+            print("get_mails_from_db")
+            self.mails_to = self.get_mails_from_db()
+            if self.mails_to is None:
+                print("get_mails_from_file")
+                self.mails_to = self.get_mails_from_file()
         
-        # Get list of mails
-        print("get_mails_from_db")
-        self.mails_to = self.get_mails_from_db()
-        if self.mails_to is None:
+        else:
+            print(self.result[0])
             print("get_mails_from_file")
             self.mails_to = self.get_mails_from_file()
-        print(str(self.mails_to))
-        
-        # Execute function 'gw_fct_utils_daily_update'
-        print("call_function")
-        self.call_function()
-        print(self.result)
         
         # Connect to SMTP server
         print("connect_smtp_server")
@@ -60,6 +63,7 @@ class DailyUpdate():
             return
         
         # Send mails
+        print(str(self.mails_to))
         if self.mails_to:
             print("create_body_mail")
             self.create_body_mail(self.result, self.time_start)
@@ -75,15 +79,18 @@ class DailyUpdate():
         
         # Set database connection
         print("set_db_connection")
-        if not self.set_db_connection():
-            pass
-            
-        # Get list of mails
-        print("get_mails_from_db")
-        self.mails_to = self.get_mails_from_db()
-        if self.mails_to is None:
+        if self.set_db_connection():
+            # Get list of mails
+            print("get_mails_from_db")
+            self.mails_to = self.get_mails_from_db()
+            if self.mails_to is None:
+                print("get_mails_from_file")
+                self.mails_to = self.get_mails_from_file()
+        else:
+            print(self.result[0])
             print("get_mails_from_file")
             self.mails_to = self.get_mails_from_file()
+            
         print(str(self.mails_to))
 
         # Connect to SMTP server
@@ -139,7 +146,7 @@ class DailyUpdate():
             self.conn = psycopg2.connect(database=self.db, user=self.user, password=self.password, host=self.host)
             self.cursor = self.conn.cursor()
         except psycopg2.DatabaseError as e:
-            print('set_db_connection error %s' % e)
+            self.result = ['Database connection error: %s' % e]
             status = False
             
         return status
@@ -187,10 +194,10 @@ class DailyUpdate():
 
             if result[0] == 0:
                 msg_content = '<h5>{body}<font color="green">{msg_ok}</font></h2>\n'.format(body=body, msg_ok=msg_ok)
-            elif "An exception has occurred" in result[0]:
-                msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2><br>{result}'.format(body=body, msg_error=msg_error, result=result[0])
-            else:
+            elif result[0] == 1:
                 msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2>\n'.format(body=body, msg_error=msg_error)
+            else:
+                msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2><br>{result}'.format(body=body, msg_error=msg_error, result=result[0])
 
             msg_full = (''.join([msg_header, msg_content])).encode()
             
