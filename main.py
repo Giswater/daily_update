@@ -155,16 +155,17 @@ class DailyUpdate():
     def call_function(self):
     
         try:
-            sql = "SELECT " + self.schema + ".gw_fct_utils_daily_update()"
+            sql = "SELECT utils.gw_fct_utils_daily_update()"
             self.cursor.execute("begin")
             self.cursor.execute(sql)
             self.result = self.cursor.fetchone()
             self.cursor.execute("commit")
         except ProgrammingError as e:
-            self.result = ["An exception has occurred: {e} \n".format(e=e)]
+            print(str(e))
+            self.result = ["An exception has occurred. Probably function 'gw_fct_utils_daily_update' not found"]
         except Exception as e:
             print(type(e).__name__)
-            self.result = ["An exception has occurred: {e}".format(e=e)]
+            self.result = ["An exception has occurred. Probably function 'gw_fct_utils_daily_update' not found"]
 
 
     def create_body_mail(self, result, time_start):
@@ -231,7 +232,6 @@ class DailyUpdate():
 
             msg_content = '<h5>{body}<font color="green">Proceso realizado correctamente</font></h2>\n'.format(body=body)
             msg_full = (''.join([msg_header, msg_content])).encode()
-            print(msg_full)
             status = self.send_mail(self.mails_to[x], msg_full)
             
         # Close connection to SMTP server
@@ -244,7 +244,6 @@ class DailyUpdate():
 
         status = True
         try:
-            print(str(self.domain_host), int(self.domain_port))
             self.smtp_server = smtplib.SMTP(self.domain_host, int(self.domain_port))
             self.smtp_server.starttls()
             self.smtp_server.login(self.sender_mail, self.sender_pwd)
@@ -279,7 +278,7 @@ class DailyUpdate():
             
             cursor = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             cursor.execute("begin")
-            sql = ("SELECT value FROM " + self.schema + ".config_param_system "
+            sql = ("SELECT value FROM utils.config_param_system "
                 " WHERE parameter = 'daily_update_mails'")
             cursor.execute(sql)
             row = cursor.fetchone()
