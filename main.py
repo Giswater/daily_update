@@ -123,7 +123,8 @@ class DailyUpdate():
             self.sender_mail = config.get("mail_config", "sender_mail")
             self.sender_pwd = config.get("mail_config", "sender_pwd")
             self.mail_to = config.get("mail_config", "mail_to")
-            
+            self.client_name = config.get("mail_config", "client_name")
+
             # Get database configuration parameter        
             self.host = config.get("db_config", "host")
             self.db = config.get("db_config", "db")
@@ -189,7 +190,7 @@ class DailyUpdate():
                          'To: ProcessLog <' + mail_to + '>\n' \
                          'MIME-Version: 1.0\n' \
                          'Content-type: text/html\n' \
-                         'Subject: PostgreSql daily update report. Result: <'+str(res)+'>\n\n' + str("Date report "+str(datetime_obj))
+                         'Subject: ' + str(self.client_name) +': Daily update report. Result: <'+str(res)+'>\n\n' + str("Date report "+str(datetime_obj))
             
             body = ' Hora inicio: ' + str(time_start) + '<br>Hora final: ' + str(time_end) + '<br><br>'
 
