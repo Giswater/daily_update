@@ -179,28 +179,45 @@ class DailyUpdate():
         # Set messages
         msg_ok = "Proceso realizado correctamente"
         msg_error = "El proceso no se ha realizado correctamente, consulta log de postgre para mas informacion"
-        if result[0] == 0:
-            res = "Proceso realizado correctamente"
-        else:
-            res = "El proceso no se ha realizado correctamente, consulta log."
+
+        try:
+            if'status' in result[0] and result[0]['status'] == 'Accepted':
+                res = "Proceso realizado correctamente"
+            else:
+                res = "El proceso no se ha realizado correctamente, consulta log."
+        except TypeError:
+            if result[0] == 0:
+                res = "Proceso realizado correctamente"
+            else:
+                res = "El proceso no se ha realizado correctamente, consulta log."
             
         for mail_to in self.mails_to:
             
-            msg_header = 'From: Daily update <' + self.sender_mail + '>\n' \
+            msg_header = 'From: Daily update <' + str(self.sender_mail) + '>\n' \
                          'To: ProcessLog <' + mail_to + '>\n' \
                          'MIME-Version: 1.0\n' \
                          'Content-type: text/html\n' \
-                         'Subject: ' + str(self.client_name) +': Daily update report. Result: <'+str(res)+'>\n\n' + str("Date report "+str(datetime_obj))
+                         'Subject: ' + str(self.client_name) + ': Daily update report. Result: <'+str(res)+'>\n\n' + str("Date report "+str(datetime_obj))
             
             body = ' Hora inicio: ' + str(time_start) + '<br>Hora final: ' + str(time_end) + '<br><br>'
 
-            if result[0] == 0:
-                msg_content = '<h5>{body}<font color="green">{msg_ok}</font></h2>\n'.format(body=body, msg_ok=msg_ok)
-            elif result[0] == 1:
-                msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2>\n'.format(body=body, msg_error=msg_error)
-            else:
-                msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2><br>{result}'.format(body=body, msg_error=msg_error, result=result[0])
-
+            try:
+                if 'status' in result[0] and result[0]['status'] == 'Accepted':
+                    msg_content = '<h5>{body}<font color="green">{msg_ok}</font></h2>\n'.format(body=body, msg_ok=msg_ok)
+                elif 'status' in result[0] and result[0]['status'] == 'Failed':
+                    msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2><br>{result}\n'.format(body=body,
+                                  msg_error=msg_error, result=str(result[0]))
+                else:
+                    msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2><br>{result}'.format(body=body,
+                                   msg_error=msg_error, result=result[0].encode('utf-8'))
+            except TypeError:
+                if result[0] == 0:
+                    msg_content = '<h5>{body}<font color="green">{msg_ok}</font></h2>\n'.format(body=body, msg_ok=msg_ok)
+                elif result[0]:
+                    msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2>\n'.format(body=body, msg_error=msg_error)
+                else:
+                    msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2>'.format(body=body, msg_error=msg_error)
+            # TODO need enconde accent
             msg_full = (''.join([msg_header, msg_content])).encode()
             
             # Send mail
