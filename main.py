@@ -181,7 +181,7 @@ class DailyUpdate():
         msg_error = "El proceso no se ha realizado correctamente, consulta log de postgre para mas informacion"
 
         try:
-            if'status' in result[0] and result[0]['status'] == 'Accepted':
+            if 'status' in result[0] and result[0]['status'] == 'Accepted':
                 res = "Proceso realizado correctamente"
             else:
                 res = "El proceso no se ha realizado correctamente, consulta log."
@@ -206,10 +206,10 @@ class DailyUpdate():
                     msg_content = '<h5>{body}<font color="green">{msg_ok}</font></h2>\n'.format(body=body, msg_ok=msg_ok)
                 elif 'status' in result[0] and result[0]['status'] == 'Failed':
                     msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2><br>{result}\n'.format(body=body,
-                                  msg_error=msg_error, result=str(result[0]))
+                                   msg_error=msg_error, result=str(result[0]))
                 else:
                     msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2><br>{result}'.format(body=body,
-                                   msg_error=msg_error, result=result[0].encode('utf-8'))
+                                   msg_error=msg_error, result=result[0])
             except TypeError:
                 if result[0] == 0:
                     msg_content = '<h5>{body}<font color="green">{msg_ok}</font></h2>\n'.format(body=body, msg_ok=msg_ok)
