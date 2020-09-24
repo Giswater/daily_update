@@ -182,9 +182,9 @@ class DailyUpdate():
 
         try:
             if 'status' in result[0] and result[0]['status'] == 'Accepted':
-                res = "Proceso realizado correctamente"
+                res = "(OK)"
             else:
-                res = "El proceso no se ha realizado correctamente, consulta log."
+                res = "(KO)"
         except TypeError:
             if result[0] == 0:
                 res = "(OK)"
