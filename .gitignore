@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Ignore config file
+#   You will need to create this file manually wherever you want to use the application.
 config.conf
 
 # C extensions
