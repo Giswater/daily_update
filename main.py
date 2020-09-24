@@ -187,17 +187,17 @@ class DailyUpdate():
                 res = "El proceso no se ha realizado correctamente, consulta log."
         except TypeError:
             if result[0] == 0:
-                res = "Proceso realizado correctamente"
+                res = "(OK)"
             else:
-                res = "El proceso no se ha realizado correctamente, consulta log."
+                res = "(KO)"
             
         for mail_to in self.mails_to:
-            
+
             msg_header = 'From: Daily update <' + str(self.sender_mail) + '>\n' \
                          'To: ProcessLog <' + mail_to + '>\n' \
                          'MIME-Version: 1.0\n' \
                          'Content-type: text/html\n' \
-                         'Subject: ' + str(self.client_name) + ': Daily update report. Result: <'+str(res)+'>\n\n' + str("Date report "+str(datetime_obj))
+                         'Subject: ' + str(self.client_name) + ': Daily update report. Result: '+str(res)+'\n\n' + str("Date report "+str(datetime_obj))
             
             body = ' Hora inicio: ' + str(time_start) + '<br>Hora final: ' + str(time_end) + '<br><br>'
 
@@ -219,7 +219,7 @@ class DailyUpdate():
                     msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2>'.format(body=body, msg_error=msg_error)
             # TODO need enconde accent
             msg_full = (''.join([msg_header, msg_content])).encode()
-            
+
             # Send mail
             self.send_mail(mail_to, msg_full)
 
