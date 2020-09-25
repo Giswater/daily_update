@@ -177,7 +177,7 @@ class DailyUpdate():
         datetime_obj = datetime.datetime.strptime(time_start, '%d/%m/%y %H:%M:%S').date()
         
         # Set messages
-        msg_ok = "Proceso realizado correctamente"
+        msg_ok = '<font color="green">Proceso realizado correctamente</font>'
         msg_error = "El proceso no se ha realizado correctamente, consulta log de postgre para mas informacion"
 
         try:
@@ -190,7 +190,12 @@ class DailyUpdate():
                 res = "(OK)"
             else:
                 res = "(KO)"
-            
+
+        try:
+            msg_ok += f"<br><br>{result[0]['message']}"
+        except KeyError:
+            pass
+
         for mail_to in self.mails_to:
 
             msg_header = 'From: Daily update <' + str(self.sender_mail) + '>\n' \
@@ -203,7 +208,7 @@ class DailyUpdate():
 
             try:
                 if 'status' in result[0] and result[0]['status'] == 'Accepted':
-                    msg_content = '<h5>{body}<font color="green">{msg_ok}</font></h2>\n'.format(body=body, msg_ok=msg_ok)
+                    msg_content = '<h5>{body}{msg_ok}</h5>\n'.format(body=body, msg_ok=msg_ok)
                 elif 'status' in result[0] and result[0]['status'] == 'Failed':
                     msg_content = '<h5>{body}<font color="red">{msg_error}</font></h2><br>{result}\n'.format(body=body,
                                    msg_error=msg_error, result=str(result[0]))
@@ -297,7 +302,7 @@ class DailyUpdate():
             cursor = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             cursor.execute("begin")
             sql = ("SELECT value FROM utils.config_param_system "
-                " WHERE parameter = 'daily_update_mails'")
+                   " WHERE parameter = 'daily_update_mails'")
             cursor.execute(sql)
             row = cursor.fetchone()
             cursor.execute("commit")
