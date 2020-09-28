@@ -192,7 +192,7 @@ class DailyUpdate():
                 res = "(KO)"
 
         try:
-            msg_ok += f"<br><br>{result[0]['message']}"
+            msg_ok += '<br><br>{message}'.format(message=result[0]["message"])
         except KeyError:
             pass
         except TypeError:
