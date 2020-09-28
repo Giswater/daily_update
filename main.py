@@ -195,6 +195,8 @@ class DailyUpdate():
             msg_ok += f"<br><br>{result[0]['message']}"
         except KeyError:
             pass
+        except TypeError:
+            pass
 
         for mail_to in self.mails_to:
 
